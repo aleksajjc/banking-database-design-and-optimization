@@ -1,0 +1,26 @@
+# SQL Server data files, transaction logs, backups and generated packages
+*.mdf
+*.ndf
+*.ldf
+*.bak
+*.trn
+*.dif
+*.bacpac
+*.dacpac
+*.bcp
+
+# Local backups and exports, including SQL dumps
+backups/
+exports/
+*.local.sql
+
+# Local configuration and credentials
+.env
+.env.*
+*.local.json
+*.local.config
+secrets/
+*.pem
+*.key
+*.pfx
+*.p12
