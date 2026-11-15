@@ -10,7 +10,7 @@ ROLLBACK;
 -- Test za TrazenuKarticu za UPDATE trigger
 BEGIN TRANSACTION
 
-UPDATE VrstaKarticebr
+UPDATE VrstaKartice
 SET nazivVrsteKartice = 'Promena'
 WHERE vrstaKarticeID = 7
 ;
