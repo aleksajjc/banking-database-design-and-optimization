@@ -44,8 +44,25 @@ CREATE TABLE dbo.TrazenaKartica_Partitioned
 ON p_TrazenaKarticaLimit (mesecniLimit);
 GO
 
+INSERT INTO dbo.TrazenaKartica_Partitioned
+(
+    zahtevKarticeID,
+    fizickoLiceID,
+    vrstaKarticeID,
+    mesecniLimit,
+    nazivVrsteKartice
+)
+SELECT
+    zahtevKarticeID,
+    fizickoLiceID,
+    vrstaKarticeID,
+    mesecniLimit,
+    nazivVrsteKartice
+FROM dbo.TrazenaKartica;
+
 SELECT
     zahtevKarticeID,
     mesecniLimit,
     $PARTITION.pf_TrazenaKarticaLimit(mesecniLimit) AS particija
 FROM dbo.TrazenaKartica_Partitioned;
+
