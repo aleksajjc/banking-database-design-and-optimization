@@ -5,42 +5,37 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    IF NOT EXISTS (SELECT 1 FROM inserted)
+        RETURN;
+
     IF UPDATE(tipKlijentaID)
     BEGIN
-        -- Prvi nivo
-        UPDATE k
-        SET k.nazivTipa = t.nazivTipa
-        FROM dbo.Klijent k
-        JOIN inserted i ON i.klijentID = k.klijentID
-        JOIN dbo.TipKlijenta t
-            ON t.tipKlijentaID = i.tipKlijentaID
-        WHERE k.nazivTipa IS NULL
-           OR k.nazivTipa <> t.nazivTipa;
-
-        -- Drugi nivo
-        UPDATE z
-        SET z.nazivTipa = t.nazivTipa
-        FROM dbo.ZahtevZaOtvaranjeRacuna z
-        JOIN inserted i ON i.klijentID = z.klijentID
-        JOIN dbo.TipKlijenta t
-            ON t.tipKlijentaID = i.tipKlijentaID
-        WHERE z.nazivTipa IS NULL
-           OR z.nazivTipa <> t.nazivTipa;
+        THROW 51005,
+            'Izmena tipKlijentaID nije dozvoljena.',
+            1;
     END
 
-    ELSE IF UPDATE(nazivTipa)
+    IF UPDATE(nazivTipa)
     BEGIN
-        IF EXISTS (
-            SELECT 1
-            FROM inserted i
-            JOIN dbo.TipKlijenta t
-                ON t.tipKlijentaID = i.tipKlijentaID
-            WHERE i.nazivTipa IS NULL
-               OR i.nazivTipa <> t.nazivTipa
-        )
-            THROW 51003,
-                'Naziv tipa klijenta mora odgovarati TipKlijenta.',
+        DECLARE @kaskada BIT = 0;
+
+        IF TRIGGER_NESTLEVEL(
+            OBJECT_ID('dbo.trg_afterUpdateTipKlijenta'),
+            'AFTER', 'DML') > 0
+
+        OR TRIGGER_NESTLEVEL(
+            OBJECT_ID('dbo.trg_afterInsertKlijent'),
+            'AFTER', 'DML') > 0
+        BEGIN
+            SET @kaskada = 1;
+        END
+
+        IF @kaskada = 0
+        BEGIN
+            THROW 51006,
+                'Direktna izmena naziva tipa klijenta nije dozvoljena.',
                 1;
+        END
     END
 END;
 GO

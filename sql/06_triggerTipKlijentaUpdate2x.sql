@@ -1,18 +1,27 @@
-CREATE OR ALTER TRIGGER trg_afterUpdateTipKlijenta ON TipKlijenta
+CREATE OR ALTER TRIGGER trg_afterUpdateTipKlijenta
+ON dbo.TipKlijenta
 AFTER UPDATE
 AS
 BEGIN
-	IF UPDATE(nazivTipa)
-	BEGIN
-		UPDATE Klijent
-		SET nazivTipa = i.nazivTipa
-		FROM Klijent
-		JOIN inserted AS i ON Klijent.tipKlijentaID = i.tipKlijentaID
+    SET NOCOUNT ON;
 
-		UPDATE ZahtevZaOtvaranjeRacuna
-		SET nazivTipa = i.nazivTipa
-		FROM ZahtevZaOtvaranjeRacuna
-		JOIN Klijent ON ZahtevZaOtvaranjeRacuna.klijentID = Klijent.klijentID  
-		JOIN inserted AS i ON Klijent.tipKlijentaID = i.tipKlijentaID
-	END
-END
+    IF UPDATE(nazivTipa)
+    BEGIN
+        -- Prvi nivo
+        UPDATE k
+        SET k.nazivTipa = i.nazivTipa
+        FROM dbo.Klijent AS k
+        JOIN inserted AS i
+            ON k.tipKlijentaID = i.tipKlijentaID;
+
+        -- Drugi nivo
+        UPDATE z
+        SET z.nazivTipa = i.nazivTipa
+        FROM dbo.ZahtevZaOtvaranjeRacuna AS z
+        JOIN dbo.Klijent AS k
+            ON z.klijentID = k.klijentID
+        JOIN inserted AS i
+            ON k.tipKlijentaID = i.tipKlijentaID;
+    END
+END;
+GO

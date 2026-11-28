@@ -1,11 +1,18 @@
-CREATE OR ALTER TRIGGER trg_afterInsertZahtevZaOtvaranjeRacuna ON ZahtevZaOtvaranjeRacuna
+CREATE OR ALTER TRIGGER trg_afterInsertZahtevZaOtvaranjeRacuna
+ON dbo.ZahtevZaOtvaranjeRacuna
 AFTER INSERT
 AS
 BEGIN
-	UPDATE zor
-	SET zor.nazivTipa = tk.nazivTipa
-	FROM ZahtevZaOtvaranjeRacuna zor
-	JOIN inserted i ON i.zahtevID = zor.zahtevID
-	JOIN Klijent k ON k.klijentID = zor.klijentID
-	JOIN TipKlijenta tk ON tk.tipKlijentaID = k.tipKlijentaID
-END
+    SET NOCOUNT ON;
+
+    UPDATE zor
+    SET zor.nazivTipa = tk.nazivTipa
+    FROM dbo.ZahtevZaOtvaranjeRacuna AS zor
+    JOIN inserted AS i
+        ON i.zahtevID = zor.zahtevID
+    JOIN dbo.Klijent AS k
+        ON k.klijentID = zor.klijentID
+    JOIN dbo.TipKlijenta AS tk
+        ON tk.tipKlijentaID = k.tipKlijentaID;
+END;
+GO

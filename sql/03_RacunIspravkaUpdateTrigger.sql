@@ -5,29 +5,37 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    IF NOT EXISTS (SELECT 1 FROM inserted)
+        RETURN;
+
     IF UPDATE(klijentID)
     BEGIN
-        UPDATE r
-        SET r.poslovnoIme = k.poslovnoIme
-        FROM dbo.Racun r
-        JOIN inserted i ON r.racunID = i.racunID
-        JOIN dbo.Klijent k ON k.klijentID = i.klijentID
-        WHERE r.poslovnoIme IS NULL
-           OR r.poslovnoIme <> k.poslovnoIme;
+        THROW 51003,
+            'Izmena klijentID nije dozvoljena.',
+            1;
     END
 
-    ELSE IF UPDATE(poslovnoIme)
+    IF UPDATE(poslovnoIme)
     BEGIN
-        IF EXISTS (
-            SELECT 1
-            FROM inserted i
-            JOIN dbo.Klijent k ON k.klijentID = i.klijentID
-            WHERE i.poslovnoIme IS NULL
-               OR i.poslovnoIme <> k.poslovnoIme
-        )
-            THROW 51002,
-                'Poslovno ime racuna mora odgovarati klijentu.',
+        DECLARE @kaskada BIT = 0;
+
+        IF TRIGGER_NESTLEVEL(
+            OBJECT_ID('dbo.trg_afterUpdateRacun'),
+            'AFTER', 'DML') > 0
+
+        OR TRIGGER_NESTLEVEL(
+            OBJECT_ID('dbo.trg_afterInsertRacun'),
+            'AFTER', 'DML') > 0
+        BEGIN
+            SET @kaskada = 1;
+        END
+
+        IF @kaskada = 0
+        BEGIN
+            THROW 51004,
+                'Direktna izmena poslovnog imena nije dozvoljena.',
                 1;
+        END
     END
 END;
 GO

@@ -5,34 +5,37 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    IF NOT EXISTS (SELECT 1 FROM inserted)
+        RETURN;
+
     IF UPDATE(vrstaKarticeID)
     BEGIN
-        UPDATE tk
-        SET tk.nazivVrsteKartice = vk.nazivVrsteKartice
-        FROM dbo.TrazenaKartica tk
-        JOIN inserted i
-            ON tk.zahtevKarticeID = i.zahtevKarticeID
-           AND tk.fizickoLiceID = i.fizickoLiceID
-           AND tk.vrstaKarticeID = i.vrstaKarticeID
-        JOIN dbo.VrstaKartice vk
-            ON vk.vrstaKarticeID = i.vrstaKarticeID
-        WHERE tk.nazivVrsteKartice IS NULL
-           OR tk.nazivVrsteKartice <> vk.nazivVrsteKartice;
+        THROW 51001,
+            'Izmena vrstaKarticeID nije dozvoljena.',
+            1;
     END
 
-    ELSE IF UPDATE(nazivVrsteKartice)
+    IF UPDATE(nazivVrsteKartice)
     BEGIN
-        IF EXISTS (
-            SELECT 1
-            FROM inserted i
-            JOIN dbo.VrstaKartice vk
-                ON vk.vrstaKarticeID = i.vrstaKarticeID
-            WHERE i.nazivVrsteKartice IS NULL
-               OR i.nazivVrsteKartice <> vk.nazivVrsteKartice
-        )
-            THROW 51001,
-                'Naziv vrste kartice mora odgovarati izabranoj vrsti.',
+        DECLARE @kaskada BIT = 0;
+
+        IF TRIGGER_NESTLEVEL(
+            OBJECT_ID('dbo.trg_afterUpdate'),
+            'AFTER', 'DML') > 0
+
+        OR TRIGGER_NESTLEVEL(
+            OBJECT_ID('dbo.trg_afterInsert'),
+            'AFTER', 'DML') > 0
+        BEGIN
+            SET @kaskada = 1;
+        END
+
+        IF @kaskada = 0
+        BEGIN
+            THROW 51002,
+                'Direktna izmena naziva vrste kartice nije dozvoljena.',
                 1;
+        END
     END
 END;
 GO

@@ -1,10 +1,16 @@
-CREATE OR ALTER TRIGGER trg_afterInsertKlijent ON Klijent
+CREATE OR ALTER TRIGGER trg_afterInsertKlijent
+ON dbo.Klijent
 AFTER INSERT
 AS
 BEGIN
-	UPDATE kl 
-	SET kl.nazivTipa = tk.nazivTipa
-	FROM Klijent AS kl
-	JOIN inserted i ON i.klijentID = kl.klijentID
-	JOIN TipKlijenta tk ON tk.tipKlijentaID = kl.tipKlijentaID
-END
+    SET NOCOUNT ON;
+
+    UPDATE kl
+    SET kl.nazivTipa = tk.nazivTipa
+    FROM dbo.Klijent AS kl
+    JOIN inserted AS i
+        ON i.klijentID = kl.klijentID
+    JOIN dbo.TipKlijenta AS tk
+        ON tk.tipKlijentaID = kl.tipKlijentaID;
+END;
+GO
